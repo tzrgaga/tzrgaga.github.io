@@ -1,0 +1,852 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.0" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.0" />
+
+
+
+
+
+
+<meta name="description" content="定义 确保某一个类只有一个实例，而且自行实例化并向整个系统提供这个实例。  使用场景 避免产生多个对象消耗过多的资源，或者某种类型的对象有且只有一个 (例如：访问IO和数据库资源。)  关键点  私有化构造函数。 通过一个静态方法或者枚举返回单例类对象。 确保单例类对象有且只有一个，尤其是在多线程环境下。 确保单例类对象在反序列化时不会重新构建对象。   饿汉式123456789101112131">
+<meta name="keywords">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Java中单例模式的几种实现方式">
+<meta property="og:url" content="http://yoursite.com/2016/03/06/android-note-1/index.html">
+<meta property="og:site_name" content="小田的blog">
+<meta property="og:description" content="定义 确保某一个类只有一个实例，而且自行实例化并向整个系统提供这个实例。  使用场景 避免产生多个对象消耗过多的资源，或者某种类型的对象有且只有一个 (例如：访问IO和数据库资源。)  关键点  私有化构造函数。 通过一个静态方法或者枚举返回单例类对象。 确保单例类对象有且只有一个，尤其是在多线程环境下。 确保单例类对象在反序列化时不会重新构建对象。   饿汉式123456789101112131">
+<meta property="og:image" content="http://hukai.me/images/android_perf_3_enum.png">
+<meta property="og:updated_time" content="2017-04-17T03:01:23.505Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Java中单例模式的几种实现方式">
+<meta name="twitter:description" content="定义 确保某一个类只有一个实例，而且自行实例化并向整个系统提供这个实例。  使用场景 避免产生多个对象消耗过多的资源，或者某种类型的对象有且只有一个 (例如：访问IO和数据库资源。)  关键点  私有化构造函数。 通过一个静态方法或者枚举返回单例类对象。 确保单例类对象有且只有一个，尤其是在多线程环境下。 确保单例类对象在反序列化时不会重新构建对象。   饿汉式123456789101112131">
+<meta name="twitter:image" content="http://hukai.me/images/android_perf_3_enum.png">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post","offset":12,"offset_float":0,"b2t":false,"scrollpercent":false},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2016/03/06/android-note-1/"/>
+
+
+
+
+
+  <title> Java中单例模式的几种实现方式 | 小田的blog </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">小田的blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/03/06/android-note-1/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="tzr">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="小田的blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                Java中单例模式的几种实现方式
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2016-03-06T00:00:00+08:00">
+                2016-03-06
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Android/" itemprop="url" rel="index">
+                    <span itemprop="name">Android</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+             <span id="/2016/03/06/android-note-1/" class="leancloud_visitors" data-flag-title="Java中单例模式的几种实现方式">
+               <span class="post-meta-divider">|</span>
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               
+                 <span class="post-meta-item-text">阅读次数 </span>
+               
+                 <span class="leancloud-visitors-count"></span>
+             </span>
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h2 id="定义"><a href="#定义" class="headerlink" title="定义"></a><strong>定义</strong></h2><blockquote>
+<p>确保某一个类只有一个实例，而且自行实例化并向整个系统提供这个实例。</p>
+</blockquote>
+<h2 id="使用场景"><a href="#使用场景" class="headerlink" title="使用场景"></a><strong>使用场景</strong></h2><blockquote>
+<p>避免产生多个对象消耗过多的资源，或者某种类型的对象有且只有一个 (例如：访问IO和数据库资源。)</p>
+</blockquote>
+<h2 id="关键点"><a href="#关键点" class="headerlink" title="关键点"></a><strong>关键点</strong></h2><blockquote>
+<ol>
+<li>私有化构造函数。</li>
+<li>通过一个静态方法或者枚举返回单例类对象。</li>
+<li>确保单例类对象有且只有一个，尤其是在多线程环境下。</li>
+<li>确保单例类对象在反序列化时不会重新构建对象。</li>
+</ol>
+</blockquote>
+<h3 id="饿汉式"><a href="#饿汉式" class="headerlink" title="饿汉式"></a><em>饿汉式</em></h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div></pre></td><td class="code"><pre><div class="line">/**</div><div class="line"> * 单例 饿汉式</div><div class="line"> * Created by hp1 on 2016/3/4.</div><div class="line"> */</div><div class="line">public class Singleton &#123;</div><div class="line"></div><div class="line">    private static Singleton instance = new Singleton();</div><div class="line"></div><div class="line">    //函数私有化</div><div class="line">    private Singleton() &#123;	</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    public static Singleton getInstance() &#123;</div><div class="line">        return instance;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h3 id="懒汉式"><a href="#懒汉式" class="headerlink" title="懒汉式"></a><em>懒汉式</em></h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div></pre></td><td class="code"><pre><div class="line">/**</div><div class="line"> * 单例 懒汉式</div><div class="line"> * Created by hp1 on 2016/3/4.</div><div class="line"> */</div><div class="line">public class Singleton &#123;</div><div class="line"></div><div class="line">    private static Singleton instance;</div><div class="line"></div><div class="line">    private Singleton() &#123;	</div><div class="line">    &#125;	</div><div class="line"></div><div class="line">    /*</div><div class="line">     * 获取实例</div><div class="line">     * @return</div><div class="line">     */</div><div class="line">    public static synchronized Singleton getInstance()&#123;</div><div class="line">        if (instance == null) &#123;</div><div class="line">            instance=new Singleton();</div><div class="line">        &#125;</div><div class="line">        return instance;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h4 id="懒汉式缺点"><a href="#懒汉式缺点" class="headerlink" title="懒汉式缺点"></a>懒汉式缺点</h4><ul>
+<li>第一次加载需要及时进行实例化，反应稍慢<br>每次调用getInstance都会进行同步，造成不必要的同步开销</li>
+</ul>
+<h3 id="Double-Check-Lock-双检锁"><a href="#Double-Check-Lock-双检锁" class="headerlink" title="Double Check Lock(双检锁)"></a><em>Double Check Lock(双检锁)</em></h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div></pre></td><td class="code"><pre><div class="line">/**</div><div class="line"> * 单例 Double Check Lock</div><div class="line"> * Created by hp1 on 2016/3/4.</div><div class="line"> */</div><div class="line">public class Singleton &#123;</div><div class="line"></div><div class="line">    private static Singleton instance = null;</div><div class="line">    </div><div class="line">    private Singleton() &#123;</div><div class="line">    </div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    /*</div><div class="line">     *获取实例</div><div class="line">     */</div><div class="line">    public static Singleton getsInstance() &#123;</div><div class="line">        if (instance == null) &#123;//为了避免不必要的同步</div><div class="line">            synchronized (Singleton.class) &#123;</div><div class="line">                if (instance == null) &#123;//为了在null的情况下创建实例</div><div class="line">                    instance = new Singleton();</div><div class="line">                &#125;</div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">        return instance;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h4 id="DCL缺点"><a href="#DCL缺点" class="headerlink" title="DCL缺点"></a>DCL缺点</h4><ul>
+<li>第一次加载时反应慢，也由于java内存模型的原因偶尔会失败(高并发或JDK6以下版本)</li>
+</ul>
+<h3 id="静态内部类单例模式"><a href="#静态内部类单例模式" class="headerlink" title="静态内部类单例模式"></a><em>静态内部类单例模式</em></h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div></pre></td><td class="code"><pre><div class="line">/**</div><div class="line"> * 静态内部类单例模式</div><div class="line"> * Created by hp1 on 2016/3/4.</div><div class="line"> */</div><div class="line">public class Singleton &#123;</div><div class="line"></div><div class="line">    private Singleton() &#123;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    /**</div><div class="line">     * 获取实例</div><div class="line">     * @return</div><div class="line">     */</div><div class="line">    public static Singleton getInstance() &#123;</div><div class="line">        return SingletonHolder.instance;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    /**</div><div class="line">     * 静态内部类</div><div class="line">     */</div><div class="line">    private static class SingletonHolder &#123;</div><div class="line">        private static final Singleton instance=new Singleton();</div><div class="line">    &#125;</div><div class="line"></div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h4 id="优点"><a href="#优点" class="headerlink" title="优点"></a>优点</h4><ul>
+<li>第一次加载Singleton类并不会初始化instance，只有在第一次调用getInstance<br>方法时才会导致instance被初始化(延迟加载)。这种方式不仅能够确保线程安全，也能够保证单例对象的唯一性(利用Classloader的特性)，同时也延迟了单例的实例化，所以这是推荐使用的单例模式实现方式。</li>
+</ul>
+<hr>
+<h3 id="枚举式"><a href="#枚举式" class="headerlink" title="枚举式"></a><em>枚举式</em></h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div></pre></td><td class="code"><pre><div class="line">/**</div><div class="line"> * 枚举单例</div><div class="line"> * Created by hp1 on 2016/3/4.</div><div class="line"> */</div><div class="line">public enum SingletonEnum &#123;</div><div class="line"></div><div class="line">    /**</div><div class="line">     * 实例</div><div class="line">     */</div><div class="line">    INSTANCE;</div><div class="line"></div><div class="line">    public void doSomething() &#123;</div><div class="line">        System.out.println(&quot;do sth...&quot;);</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h4 id="枚举单例的优点"><a href="#枚举单例的优点" class="headerlink" title="枚举单例的优点"></a>枚举单例的优点</h4><ul>
+<li>枚举在java中与普通的类是一样的，不仅能够拥有字段，还能够<br>有自己的方法。最重要的是默认枚举实例的创建时线程安全的，并且在任何<br>情况下它都是一个单例。</li>
+</ul>
+<hr>
+<h2 id="个人理解"><a href="#个人理解" class="headerlink" title="个人理解"></a><strong>个人理解</strong></h2><ul>
+<li><p>由于Android官方在关于管理应用内存方面给出的建议<br><img src="http://hukai.me/images/android_perf_3_enum.png" alt="Android官方关于管理应用内存的建议"> </p>
+</li>
+<li><p>言外之意就是Enum在Android中内存占用比较高，所以不建议使用。</p>
+</li>
+<li>这里推荐使用<strong>静态内部类单例模式</strong></li>
+</ul>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a><strong>总结</strong></h2><blockquote>
+<p>不管以哪种方式实现单例模式，它们的核心都是将构造函数私有化，并且通过静态方法获取一个唯一的实例，在这个获取的过程中必须保证线程安全、防止反序列化导致的重新生成实例对象等问题。选择哪种实现方式取决于项目本身，如是否复杂的并发环境，JDK版本是否过低、单例对象的资源消耗等。</p>
+<p>——<code>《Android源码设计模式解析与实战》</code></p>
+</blockquote>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+        
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/03/11/git-note-1/" rel="next" title="git使用笔记">
+                <i class="fa fa-chevron-left"></i> git使用笔记
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.png"
+               alt="tzr" />
+          <p class="site-author-name" itemprop="name">tzr</p>
+           
+              <p class="site-description motion-element" itemprop="description">常与同好争高下，不与傻瓜论长短！</p>
+          
+        </div>
+        <nav class="site-state motion-element">
+
+          
+            <div class="site-state-item site-state-posts">
+              <a href="/archives">
+                <span class="site-state-item-count">5</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-categories">
+              
+                <span class="site-state-item-count">4</span>
+                <span class="site-state-item-name">分类</span>
+              
+            </div>
+          
+
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#定义"><span class="nav-number">1.</span> <span class="nav-text">定义</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#使用场景"><span class="nav-number">2.</span> <span class="nav-text">使用场景</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#关键点"><span class="nav-number">3.</span> <span class="nav-text">关键点</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#饿汉式"><span class="nav-number">3.1.</span> <span class="nav-text">饿汉式</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#懒汉式"><span class="nav-number">3.2.</span> <span class="nav-text">懒汉式</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#懒汉式缺点"><span class="nav-number">3.2.1.</span> <span class="nav-text">懒汉式缺点</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Double-Check-Lock-双检锁"><span class="nav-number">3.3.</span> <span class="nav-text">Double Check Lock(双检锁)</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#DCL缺点"><span class="nav-number">3.3.1.</span> <span class="nav-text">DCL缺点</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#静态内部类单例模式"><span class="nav-number">3.4.</span> <span class="nav-text">静态内部类单例模式</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#优点"><span class="nav-number">3.4.1.</span> <span class="nav-text">优点</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#枚举式"><span class="nav-number">3.5.</span> <span class="nav-text">枚举式</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#枚举单例的优点"><span class="nav-number">3.5.1.</span> <span class="nav-text">枚举单例的优点</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#个人理解"><span class="nav-number">4.</span> <span class="nav-text">个人理解</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#总结"><span class="nav-number">5.</span> <span class="nav-text">总结</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2017</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">tzr</span>
+</div>
+
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+
+        
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.0"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.0"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("efhJLEb3rzRxXWkJyVVcliFF-gzGzoHsz", "vjzbubator60elSFXGMzIhzp");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+          for(var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if( countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            /* Set ACL */
+            var acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            newcounter.setACL(acl);
+            /* End Set ACL */
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
